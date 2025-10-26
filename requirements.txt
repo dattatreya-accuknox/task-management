@@ -1,0 +1,11 @@
+django
+djangorestframework
+djangorestframework-simplejwt
+djoser
+django-filter
+django-celery-beat
+django-celery-results
+celery
+redis
+psycopg2-binary
+python-decouple

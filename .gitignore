@@ -1,0 +1,7 @@
+__pycache__
+*.http
+migrations
+logs
+celerybeat-schedule
+db.sqlite3
+

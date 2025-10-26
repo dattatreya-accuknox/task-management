@@ -1,0 +1,84 @@
+{% extends 'tasks/main.html' %}
+
+{% block content %}
+    <h2>Manage/Create Projects</h2>
+    
+    {% if user.is_authenticated %}
+        <h3>All Projects</h3>
+        <table border="1">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Name</th>
+                    <th>Description</th>
+                    <th>Created By</th>
+                    <th>Created At</th>
+                    <th>Updated At</th> 
+                </tr>
+            </thead>
+            <tbody>
+                {% for project in projects %}
+                    <tr>
+                        <td>{{ project.id }}</td>
+                        <td>{{ project.name }}</td>
+                        <td>{{ project.description }}</td>
+                        <td>{{ project.created_by.username|default:'N/A' }}</td>
+                        <td>{{ project.created_at|date:"F d, Y H:i" }}</td>
+                        <td>{{ project.updated_at|date:"F d, Y H:i" }}</td>
+                        <td>
+                            <a href="{% url 'project-detail' project.id %}"><button>View</button></a>
+                            {% if user.is_staff %}
+                                <form method="POST" action="{% url 'project-detail' project.id %}" style="display:inline;">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="_method" value="DELETE">
+                                    <button type="submit" onclick="return confirm('Delete this project?')">Delete</button>
+                                </form>
+                            {% endif %}
+                        </td>
+                    </tr>
+                {% empty %}
+                    <tr>
+                        <td colspan="7">No projects available.</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        <br>
+        <h3>Create New Project</h3>
+        <form method="POST" action="{% url 'project-list' %}">
+            {% csrf_token %}
+            <label for="name">Project Name:</label>
+            <input type="text" id="name" name="name" required><br><br>
+            
+            <label for="description">Description:</label>
+            <textarea id="description" name="description" rows="4" cols="50"></textarea><br><br>
+            
+            <button type="submit">Create Project</button>
+        </form>
+
+        {% if errors %}
+            <h3>Errors:</h3>
+            <ul>
+                {% for field, error_list in errors.items %}
+                    {% for error in error_list %}
+                        <li>{{ field }}: {{ error }}</li>
+                    {% endfor %}
+                {% endfor %}
+            </ul>
+        {% endif %}
+
+        <br>
+        <a href="{% url 'task-dashboard' %}"><button>Back to Tasks</button></a>
+
+    {% else %}
+        <p>Please log in to manage projects.</p>
+        <a href="{% url 'auth-auth-page' %}">Login</a>
+    {% endif %}
+{% endblock content %}
+<!-- 
+eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzYxNDk3NTMyLCJpYXQiOjE3NjE0OTcyMzMsImp0aSI6Ijk5NDBiNmUyYTY2NTQzZWY5OTE0MTE2NDg1NGMwOTg5IiwidXNlcl9pZCI6IjEifQ.Y1EYvEOsXzbgcyH5ST-OgQ45K-y9qwqCsrWBq-HM1q4
+
+curl -X GET http://localhost:8000/tasks/ \
+  -H "Authorization: JWT eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzYxNDk3NTMyLCJpYXQiOjE3NjE0OTcyMzMsImp0aSI6Ijk5NDBiNmUyYTY2NTQzZWY5OTE0MTE2NDg1NGMwOTg5IiwidXNlcl9pZCI6IjEifQ.Y1EYvEOsXzbgcyH5ST-OgQ45K-y9qwqCsrWBq-HM1q4
+" -->
