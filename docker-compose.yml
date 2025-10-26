@@ -1,0 +1,79 @@
+services:
+  postgres:
+    image: postgres:18-alpine
+    container_name: task-postgres
+    environment:
+      POSTGRES_DB: postgres
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis
+    container_name: task-redis
+    command: redis-server --port 6380
+    ports:
+      - "6380:6380"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "-p", "6380", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+
+  django-server:
+    build: .
+    container_name: task_djanogserver
+    command: >
+      sh -c "python manage.py makemigrations &&
+             python manage.py migrate &&
+             python manage.py create_dummy_data &&
+             python manage.py runserver 0.0.0.0:8000"
+    volumes:
+      - ./proj:/app
+    ports:
+      - "8000:8000"
+    env_file:
+      - .env
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  celery_worker:
+    build: .
+    container_name: task_celery_worker
+    command: celery -A proj worker --loglevel=info
+    volumes:
+      - ./proj:/app
+    env_file:
+      - .env
+    depends_on:
+      - django-server
+      - redis
+
+  celery_beat:
+    build: .
+    container_name: task_celery_beat
+    command: celery -A proj beat --loglevel=info
+    volumes:
+      - ./proj:/app
+    env_file:
+      - .env
+    depends_on:
+      - django-server
+      - redis
+
+volumes:
+  postgres_data:
+  redis_data:
